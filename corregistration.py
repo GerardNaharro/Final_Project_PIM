@@ -15,19 +15,19 @@ from scipy import ndimage
 import os
 
 def MIP_coronal_plane(img_dcm: np.ndarray) -> np.ndarray:
-    # EN VERDAD ES SAGITAL
     """ Compute the maximum intensity projection on the coronal orientation. """
     return np.max(img_dcm, axis=1)
 
+
 def MIP_sagittal_plane(img_dcm: np.ndarray) -> np.ndarray:
-    # EN VERDAD ES AXIAL
     """ Compute the maximum intensity projection on the sagittal orientation. """
     return np.max(img_dcm, axis=2)
 
+
 def MIP_axial_plane(img_dcm: np.ndarray) -> np.ndarray:
-    # EN VERDAD ES CORONAL
     """ Compute the maximum intensity projection on the axial orientation. """
     return np.max(img_dcm, axis=0)
+
 
 def rotate_on_coronal_plane(img_dcm: np.ndarray, angle_in_degrees: float) -> np.ndarray:
     # EN VERDAD ES SAGITAL
@@ -40,43 +40,23 @@ def rotate_on_sagittal_plane(img_dcm: np.ndarray, angle_in_degrees: float) -> np
     """Rotate the image on the sagittal plane."""
     return scipy.ndimage.rotate(img_dcm, angle_in_degrees, axes=(0, 1), reshape=False)
 
+
 def rotate_on_axial_plane(img_dcm: np.ndarray, angle_in_degrees: float) -> np.ndarray:
     # EN VERDAD ES CORONAL
     """ Rotate the image on the axial plane. """
     return scipy.ndimage.rotate(img_dcm, angle_in_degrees, axes=(1, 2), reshape=False)
+
 def min_max_normalization(img):
     min_val, max_val = np.min(img), np.max(img)
     normalized_img = (img - min_val) / (max_val - min_val)
     return normalized_img
 
-def MIP_sagittal_plane(img_dcm: np.ndarray) -> np.ndarray:
-    # EN VERDAD ES AXIAL
-    """ Compute the maximum intensity projection on the sagittal orientation. """
-    return np.max(img_dcm, axis=2)
 
 def mean_squared_error(img_input: np.ndarray, img_reference) -> np.ndarray:
     """ Compute the MSE between two images. """
     # Your code here:
     #   ...
     return np.mean((img_input - img_reference) ** 2)
-
-def rescale_image(input_img, reference_img):
-    """
-    Reescala la imagen de input para que tenga el mismo factor de escala que la imagen de referencia.
-
-    Args:
-        input_img (numpy.ndarray): Imagen de entrada.
-        reference_img: Imagen de referencia con información de escala en el header.
-
-    Returns:
-        numpy.ndarray: Imagen de input reescalada.
-    """
-    intercept_ref = reference_img.RescaleIntercept
-    slope_ref = reference_img.RescaleSlope
-
-    rescaled_img = input_img * slope_ref + intercept_ref
-
-    return rescaled_img
 
 def resize_images_to_same_scale(pixel_spacing1, image2, pixel_spacing2):
 
@@ -117,6 +97,7 @@ def animation_alpha_fusion(img1, img2, rotation, proj, name):
 
         projection = ((img_cmapped * (1 - 0.25)) + (mask_cmapped * 0.25))
         plt.clf()
+        projection = np.flip(projection, 0)
         plt.imshow(projection)
         plt.savefig('results/MIP/' + name + f'_{idx}.png')  # Save animation
         print(f'projection {idx} created!')
@@ -402,10 +383,10 @@ if __name__ == '__main__':
     print("shape input img3d: " + str(img3d.shape))
     print("shape reference img: " + str(img_reference.shape))
 
-    #print(reference)
-    #print(input_slices[0])
-    #[print(f'{dicom_tag}: {dicom_value}') for dicom_tag, dicom_value in input_slices[0].items()]
-    #[print(f'{dicom_tag}: {dicom_value}') for dicom_tag, dicom_value in reference.items()]
+    print(reference)
+    print(input_slices[0])
+    [print(f'{dicom_tag}: {dicom_value}') for dicom_tag, dicom_value in input_slices[0].items()]
+    [print(f'{dicom_tag}: {dicom_value}') for dicom_tag, dicom_value in reference.items()]
 
     # by looking at Image Orientation we can see x and y axes are not in the same orientation
     img3d = np.flip(img3d, axis=0)
@@ -527,14 +508,14 @@ if __name__ == '__main__':
 
     # Revert the transformations to go back to the input space with thalamus applied
     inv_params = tuple([-x for x in params])
-    img_input_uncorregistered = return_to_patient_space(img_imput_corregistered_cropped,inv_params)
+    #img_input_uncorregistered = return_to_patient_space(img_imput_corregistered_cropped,inv_params)
     thalamus_patient_space = return_to_patient_space(thalamus, inv_params)
 
     name = "Thalamus_Mask_In_Patient_Space"
-    animation_alpha_fusion(img_input_uncorregistered, thalamus_patient_space, rotate_on_axial_plane, MIP_coronal_plane, name)
+    animation_alpha_fusion(input_pruebas[6:-6, 6:-6, 6:-6], thalamus_patient_space, rotate_on_axial_plane, MIP_coronal_plane, name)
     mask_centroid = find_centroid(thalamus_patient_space)
     name = "Orthogonal Slices In Patient Space"
-    plot_orthogonal_slices_alpha_fusion(img_input_uncorregistered, thalamus_patient_space, mask_centroid, name)
+    plot_orthogonal_slices_alpha_fusion(input_pruebas[6:-6, 6:-6, 6:-6], thalamus_patient_space, mask_centroid, name)
 
 
 

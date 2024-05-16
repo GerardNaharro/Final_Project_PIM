@@ -58,9 +58,7 @@ def apply_segmentation_mask(img: np.ndarray,mask: np.ndarray,):
 
 
     return img_cmapped, mask_cmapped
-    #plt.imshow(img_cmapped * (1 - alpha) + mask_cmapped * alpha)
-    #plt.title(f'Segmentation with alpha {alpha}')
-    #plt.show()
+
 
 def apply_cmap(img: np.ndarray, cmap_name: str = 'bone') -> np.ndarray:
     """ Apply a colormap to a 2D image. """
@@ -69,21 +67,6 @@ def apply_cmap(img: np.ndarray, cmap_name: str = 'bone') -> np.ndarray:
     cm = plt.colormaps[cmap_name]
     return cm(img)
 
-def visualize_alpha_fusion(img: np.ndarray, mask: np.ndarray, alpha: float = 0.25):
-    """ Visualize both image and mask in the same plot. """
-    # Your code here:
-    #   Remember the Painter's Algorithm with alpha blending
-    #   https://en.wikipedia.org/wiki/Alpha_compositing
-    # ...
-    img_sagittal_cmapped = apply_cmap(img, cmap_name='bone')
-    mask_bone_cmapped = apply_cmap(mask, cmap_name='copper')
-    mask_bone_cmapped = mask_bone_cmapped * mask[..., np.newaxis]
-
-    alpha = 0.25
-    plt.imshow(img_sagittal_cmapped * (1 - alpha) + mask_bone_cmapped * alpha, aspect=0.98 / 3.27)
-    plt.title(f'Segmentation with alpha {alpha}')
-    plt.show()
-    #return img_sagittal_cmapped,mask_bone_cmapped
 
 def min_max_normalization(img):
     min_val, max_val = np.min(img), np.max(img)
@@ -158,7 +141,7 @@ if __name__ == "__main__":
         img3d[:, :, i] = img2d
 
     print(img3d.shape)
-    '''# plot 3 orthogonal slices
+    # plot 3 orthogonal slices
     a1 = plt.subplot(2, 2, 1)
     plt.imshow(img3d[:, :, img_shape[2] // 2])
     a1.set_aspect(ax_aspect)
@@ -212,23 +195,15 @@ if __name__ == "__main__":
     cm = matplotlib.colormaps['bone']
     fig, ax = plt.subplots()
     #   Configure directory to save results
-    os.makedirs('results/MIP/', exist_ok=True)'''
+    os.makedirs('results/MIP/', exist_ok=True)
 
-    '''
+
     n = 16
     projections = []
     for idx, alpha in enumerate(np.linspace(0, 360 * (n - 1) / n, num=n)):
-        #print(img3d)
-        #print(img3d.shape)
+
         rotated_img = rotate_on_sagittal_plane(img3d, alpha)
         projection = MIP_coronal_plane(rotated_img)
-        #print(projection)
-        #print(projection.shape)
-
-        #img_cmapped, mask_cmapped = apply_segmentation_mask(projection,img_segmentation,find_centroid(img_segmentation))
-        #plt.imshow(img_cmapped * (1 - alpha_value) + mask_cmapped * alpha_value)
-
-        #projection = overlay_segmentation(projection, MIP_sagittal_plane(rotate_on_axial_plane(np.transpose(img_segmentation, [1, 2, 0]),alpha)))
 
         plt.imshow(projection, cmap=cm, vmin=img_min, vmax=img_max, aspect=sag_aspect)
         plt.savefig(f'results/MIP/ProjectionSagittal_{idx}.png')  # Save animation
@@ -252,6 +227,7 @@ if __name__ == "__main__":
         #print(alpha)
         rotated_img = rotate_on_sagittal_plane(img3d, alpha)
         projection = MIP_axial_plane(rotated_img)
+        projection = np.flip(projection, 1)
         plt.imshow(projection.T, cmap=cm, vmin=img_min, vmax=img_max, aspect=cor_aspect)
         plt.savefig(f'results/MIP/ProjectionCoronal_{idx}.png')  # Save animation
         print(f'Coronal projection {idx} created!')
@@ -312,21 +288,11 @@ if __name__ == "__main__":
                                      interval=250, blit=True)
     anim.save('results/MIP/AnimationSegmentationCoronal.gif')  # Save animation
     print("Coronal Segmentation animation created!")
-'''
-    # al torcido un flip
-#segment, imagepositionpatient
 
-    #print(img_segmentation.shape)
     all_segments = np.zeros((77,512,512))
     for i in range(4):
-        #print(img_segmentation[i * 77:(i+1) * 77,:,:])
         all_segments = np.where(img_segmentation[i * 77:(i+1) * 77,:,:] > 0, i + 1, all_segments)
 
-
-    '''projection = MIP_sagittal_plane(all_segments)
-    plt.imshow(projection.T, cmap='copper', vmin=np.amin(all_segments), vmax=np.amax(all_segments), aspect=sag_aspect)
-    plt.show()
-    cv2.waitKey(0)'''
 
     img_min = np.amin(img3d)
     img_max = np.amax(img3d)
@@ -336,7 +302,8 @@ if __name__ == "__main__":
     projections = []
     img3d = min_max_normalization(img3d)
     img3d[img3d < 0.3] = 0
-    '''for idx, alpha in enumerate(np.linspace(0, 360 * (n - 1) / n, num=n)):
+
+    for idx, alpha in enumerate(np.linspace(0, 360 * (n - 1) / n, num=n)):
 
         rotated_img = rotate_on_sagittal_plane(img3d, alpha)
         rotated_seg = rotate_on_axial_plane(all_segments, alpha)
@@ -344,26 +311,8 @@ if __name__ == "__main__":
         projection_seg = MIP_sagittal_plane(rotated_seg)
 
         img_cmapped, mask_cmapped = apply_segmentation_mask(projection,projection_seg)
-        # plt.imshow(img_cmapped * (1 - alpha_value) + mask_cmapped * alpha_value)
         mask_cmapped = np.transpose(mask_cmapped, (1, 0, 2))
-
-        # Save fig a with one cmap
-        #plt.imsave('projectionTEMP.png', projection, cmap='bone')
-
-        # Save fig b with a different cmap
-        #plt.imsave('projectionsegTEMP.png', projection_seg, cmap='copper')
-
-        # Reopen fig a and fig b
-        #figa = plt.imread('projectionTEMP.png')
-        #figb = plt.imread('projectionsegTEMP.png')
-        #figb = np.transpose(figb, (1, 0, 2))
-
-
-        #projection = ((figa * (1 - 0.25)) + (figb * 0.25))
-
-        #projection_seg = np.transpose(projection_seg, (1, 0))
         projection = ((img_cmapped * (1 - 0.25)) + (mask_cmapped * 0.25))
-        # projection = overlay_segmentation(projection, MIP_sagittal_plane(rotate_on_axial_plane(np.transpose(img_segmentation, [1, 2, 0]),alpha)))
         plt.clf()
         plt.imshow(projection, aspect=sag_aspect)
         plt.savefig(f'results/MIP/ProjectionSagittal_SEGMENTATED_{idx}.png')  # Save animation
@@ -378,7 +327,7 @@ if __name__ == "__main__":
     anim = animation.ArtistAnimation(fig, animation_data,
                                      interval=250, blit=True)
     anim.save('results/MIP/AnimationSagittal_SEGMENTATED.gif')  # Save animation
-    print("Sagittal animation created!")'''
+    print("Sagittal animation created!")
 
     for idx, alpha in enumerate(np.linspace(0, 360 * (n - 1) / n, num=n)):
         rotated_img = rotate_on_sagittal_plane(img3d, alpha)
@@ -387,11 +336,9 @@ if __name__ == "__main__":
         projection_seg = MIP_coronal_plane(rotated_seg)
 
         img_cmapped, mask_cmapped = apply_segmentation_mask(projection.T, projection_seg)
-        #mask_cmapped = np.transpose(mask_cmapped, (1, 0, 2))
-
         projection = ((img_cmapped * (1 - 0.25)) + (mask_cmapped * 0.25))
-        # projection = overlay_segmentation(projection, MIP_sagittal_plane(rotate_on_axial_plane(np.transpose(img_segmentation, [1, 2, 0]),alpha)))
         plt.clf()
+        projection = np.flip(projection, 0)
         plt.imshow(projection, aspect=cor_aspect)
         plt.savefig(f'results/MIP/ProjectionCoronal_SEGMENTATED_{idx}.png')  # Save animation
         print(f'Coronal projection {idx} created!')
